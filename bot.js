@@ -6,5 +6,4 @@ bot.command("start", ctx => {
     ctx.reply("Bot in development");
 });
 
-bot.launch();
 
