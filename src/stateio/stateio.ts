@@ -1,9 +1,8 @@
-/*
+const fs  = require('fs');
 const filePath = '/file/state';
-const fs = require('fs');
 
-export default class FileIo {
-    writeStates = (count, lastMessageText, questionId) => {
+const FileIo = {
+    writeStates: (count, lastMessageText, questionId) => {
         let state = {
             count: count,
             lastText: lastMessageText,
@@ -11,11 +10,11 @@ export default class FileIo {
         };
         let stateObjectJson = JSON.stringify(state);
         fs.writeFileSync(filePath, stateObjectJson)
-    };
-    readStates = () => {
+    },
+    readStates: () => {
         let rawData = fs.readFileSync(filePath);
         return JSON.parse(rawData);
-    };
+    }
 
-}
-*/
+};
+export default FileIo;

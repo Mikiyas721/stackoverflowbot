@@ -4,16 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/bot.js",
+    "start": "node src/bot.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
     "node": "12.6.0"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mikiyas721/stackoverflowbot.git"
+  },
   "author": "",
-  "type": "module",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mikiyas721/stackoverflowbot/issues"
+  },
+  "homepage": "https://github.com/Mikiyas721/stackoverflowbot#readme",
   "dependencies": {
     "axios": "^0.19.2",
     "html-to-text": "^5.1.1",
