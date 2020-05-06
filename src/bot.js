@@ -1,14 +1,11 @@
 const Telegraf = require('telegraf');
-const fs = require('fs');
 const axios = require('axios');
 const htmltotext = require('html-to-text');
 
-//import configs from './config/config';
 const configs = require('./config/config');
 const fileio = require('./fileio/fileio');
 
 const bot = new Telegraf('1000620512:AAF8g7HtlbcdGB7SrfRVTcUFmHF-F-8CysI');
-const filePath = 'state/state.json';
 
 let count = 0;
 let currentQuestionId;
@@ -52,7 +49,7 @@ bot.hears("Browse question", ctx => {
                         ]
                     }, parse_mode: "Markdown"
                 });
-                writeStates(count, ctx.message.text, items[count].question_id)
+                fileio.writeStates(count, ctx.message.text, items[count].question_id)
             } else {
                 ctx.reply(`Could not find any such question with word(s) " ${ctx.message.text} " in it.`)
             }
@@ -65,7 +62,7 @@ bot.hears("Browse question", ctx => {
 
 bot.action("previousQuestion", async ctx => {
     try {
-        const state = readStates();
+        const state = fileio.readStates();
         let count = state.questionCount;
         if (count > 0) {
             count--;
@@ -82,7 +79,7 @@ bot.action("previousQuestion", async ctx => {
                     ]
                 }/*, parse_mode: "Markdown"*/
             });
-            writeStates(count, lastInputText, items[count].question_id)
+            fileio.writeStates(count, lastInputText, items[count].question_id)
         } else {
             //TODO Send toast message instead.
         }
@@ -93,7 +90,7 @@ bot.action("previousQuestion", async ctx => {
 });
 bot.action("nextQuestion", async ctx => {
     try {
-        const state = readStates();
+        const state = fileio.readStates();
         let count = state.questionCount;
         const lastInputText = state.lastQuestionText;
         const response = await axios.get(`https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&site=stackoverflow&tagged=${lastInputText}&filter=withbody`);
@@ -110,7 +107,7 @@ bot.action("nextQuestion", async ctx => {
                     ]
                 },
             });
-            writeStates(count, lastInputText, items[count].question_id)
+            fileio.writeStates(count, lastInputText, items[count].question_id)
         } else {
             // TODO Send toast message instead.
 
@@ -121,7 +118,7 @@ bot.action("nextQuestion", async ctx => {
 
 });
 bot.action("previousAnswer", async ctx => {
-    const currentState = readStates();
+    const currentState = fileio.readStates();
     if (currentState.answerCount > 0) {
         ctx.deleteMessage();
         const response = await axios.get(`https://api.stackexchange.com/2.2/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
@@ -136,14 +133,14 @@ bot.action("previousAnswer", async ctx => {
                 ]
             }
         });
-        writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount - 1, items[currentState.answerCount - 1].answer_id);
+        fileio.writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount - 1, items[currentState.answerCount - 1].answer_id);
     } else {
 
     }
 
 });
 bot.action("nextAnswer", async ctx => {
-    const currentState = readStates();
+    const currentState = fileio.readStates();
     const response = await axios.get(`https://api.stackexchange.com/2.2/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
     const items = response.data.items;
     if (currentState.answerCount < items.length) {
@@ -158,13 +155,13 @@ bot.action("nextAnswer", async ctx => {
                 ]
             }
         });
-        writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount + 1, items[currentState.answerCount + 1].answer_id);
+        fileio.writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount + 1, items[currentState.answerCount + 1].answer_id);
     } else {
 
     }
 });
 bot.action("browseAnswer", async ctx => {
-    const currentState = readStates();
+    const currentState = fileio.readStates();
     const response = await axios.get(`https://api.stackexchange.com/2.2/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
     const items = response.data.items;
     let message = '';
@@ -186,25 +183,10 @@ bot.action("browseAnswer", async ctx => {
                 ]
             }
         });
-        writeStates(0, currentState.lastQuestionText, currentState.currentQuestionId, 0, items[0].answer_id);
+        fileio.writeStates(0, currentState.lastQuestionText, currentState.currentQuestionId, 0, items[0].answer_id);
     }
 
 });
-writeStates = (questionCount = 0, lastMessageText, questionId, answerCount = 0, answerId) => {
-    let state = {
-        questionCount: questionCount,
-        lastQuestionText: lastMessageText,
-        currentQuestionId: questionId,
-        answerCount: answerCount,
-        currentAnswerId: answerId
-    };
-    let stateObjectJson = JSON.stringify(state);
-    fs.writeFileSync(filePath, stateObjectJson)
-};
-readStates = () => {
-    let rawData = fs.readFileSync(filePath);
-    return JSON.parse(rawData);
-};
 
 if (configs.PRODUCTION_MODE) {
     bot.telegram.setWebhook(`https://stackoverflowrealbot.herokuapp.com/${configs.TOKEN}`).then(() => console.log("Webhook added"));
