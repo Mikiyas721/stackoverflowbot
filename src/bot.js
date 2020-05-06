@@ -14,11 +14,16 @@ let count = 0;
 let currentQuestionId;
 
 bot.start(ctx => {
-    ctx.telegram.sendMessage(ctx.chat.id, "Use this bot to get easier access to Stack Overflow. In development.", {
-        reply_markup: {
-            keyboard: [[{text: "Browse question"}]], resize_keyboard: true
-        }
-    });
+    try {
+        console.log("start");
+        return ctx.telegram.sendMessage(ctx.chat.id, "Use this bot to get easier access to Stack Overflow. In development.", {
+            reply_markup: {
+                keyboard: [[{text: "Browse question"}]], resize_keyboard: true
+            }
+        });
+    } catch (e) {
+        console.log(e);
+    }
 });
 bot.help(ctx => {
     const helpMessage = `
