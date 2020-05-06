@@ -48,8 +48,7 @@ bot.hears("Browse question", ctx => {
                     }, parse_mode: "Markdown"
                 });
                 writeStates(count, ctx.message.text, items[count].question_id)
-            }
-            else {
+            } else {
                 ctx.reply(`Could not find any such question with word(s) " ${ctx.message.text} " in it.`)
             }
 
@@ -79,8 +78,7 @@ bot.action("previousQuestion", async ctx => {
                 }/*, parse_mode: "Markdown"*/
             });
             writeStates(count, lastInputText, items[count].question_id)
-        }
-        else {
+        } else {
             //TODO Send toast message instead.
         }
     } catch (e) {
@@ -134,8 +132,7 @@ bot.action("previousAnswer", async ctx => {
             }
         });
         writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount - 1, items[currentState.answerCount - 1].answer_id);
-    }
-    else {
+    } else {
 
     }
 
@@ -157,8 +154,7 @@ bot.action("nextAnswer", async ctx => {
             }
         });
         writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount + 1, items[currentState.answerCount + 1].answer_id);
-    }
-    else {
+    } else {
 
     }
 });
@@ -174,8 +170,7 @@ bot.action("browseAnswer", async ctx => {
         ctx.telegram.sendMessage(ctx.chat.id, message, {
             parse_mode: "Markdown"
         });
-    }
-    else {
+    } else {
         ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[0].body), {
             reply_markup: {
                 inline_keyboard: [
@@ -205,6 +200,12 @@ readStates = () => {
     let rawData = fs.readFileSync(filePath);
     return JSON.parse(rawData);
 };
-bot.launch();
+
+if (configs.PRODUCTION_MODE) {
+    bot.telegram.setWebhook('https://stackoverflowrealbot.herokuapp.com').then(() => console.log("Webhook added"))
+    bot.startWebhook(`/${configs.TOKEN}`, null, 8443)
+} else {
+    bot.launch().then(() => console.log("Bot launched")).catch(console.log);
+}
 
 
