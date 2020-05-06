@@ -208,7 +208,7 @@ readStates = () => {
 
 if (configs.PRODUCTION_MODE) {
     bot.telegram.setWebhook(`https://stackoverflowrealbot.herokuapp.com/${configs.TOKEN}`).then(() => console.log("Webhook added"))
-    bot.startWebhook(`/${configs.TOKEN}`).then(console.log).catch(console.log)
+    bot.telegram.startWebhook(`/${configs.TOKEN}`).then(console.log).catch(console.log)
 } else {
     bot.launch().then(() => console.log("Bot launched")).catch(console.log);
 }
