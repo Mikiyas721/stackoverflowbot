@@ -32,12 +32,21 @@ bot.help(ctx => {
         }
     )
 });
+
+makeQuestionRequest = async (enteredText, ctx) => {
+    try {
+        const response = await axios.get(configs.API_BASE_URL + `/questions?order=desc&sort=votes&site=stackoverflow&tagged=${enteredText}&filter=withbody`);
+        return response.data.items;
+    } catch (e) {
+        ctx.reply(e)
+    }
+};
+
 bot.hears("Browse question", ctx => {
     ctx.reply("Please type in the key words");
     bot.on('text', async ctx => {
         try {
-            const response = await axios.get(configs.API_BASE_URL + `/questions?order=desc&sort=votes&site=stackoverflow&tagged=${ctx.message.text}&filter=withbody`);
-            let items = response.data.items;
+            let items = makeQuestionRequest(ctx.message.text, ctx);
             count = 0;
             if (items.length !== 0) {
                 ctx.telegram.sendMessage(ctx.chat.id, `*${htmltotext.fromString(items[count].title)}*\n\n${htmltotext.fromString(items[count].body)}`, {
@@ -68,7 +77,7 @@ bot.action("previousQuestion", async ctx => {
             count--;
             const lastInputText = state.lastQuestionText;
             ctx.deleteMessage();
-            const response = await axios.get(configs.API_BASE_URL +`/questions?order=desc&sort=votes&site=stackoverflow&tagged=${lastInputText}&filter=withbody`);
+            const response = await axios.get(configs.API_BASE_URL + `/questions?order=desc&sort=votes&site=stackoverflow&tagged=${lastInputText}&filter=withbody`);
             let items = response.data.items;
             ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[count].title)}\n\n${htmltotext.fromString(items[count].body)}`, {
                 reply_markup: {
@@ -93,7 +102,7 @@ bot.action("nextQuestion", async ctx => {
         const state = fileio.readStates();
         let count = state.questionCount;
         const lastInputText = state.lastQuestionText;
-        const response = await axios.get(configs.API_BASE_URL +`/questions?order=desc&sort=votes&site=stackoverflow&tagged=${lastInputText}&filter=withbody`);
+        const response = await axios.get(configs.API_BASE_URL + `/questions?order=desc&sort=votes&site=stackoverflow&tagged=${lastInputText}&filter=withbody`);
         let items = response.data.items;
         if (count < items.length) {
             count++;
@@ -121,7 +130,7 @@ bot.action("previousAnswer", async ctx => {
     const currentState = fileio.readStates();
     if (currentState.answerCount > 0) {
         ctx.deleteMessage();
-        const response = await axios.get(configs.API_BASE_URL +`/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
+        const response = await axios.get(configs.API_BASE_URL + `/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
         const items = response.data.items;
         ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[currentState.questionCount - 1].body), {
             reply_markup: {
@@ -141,7 +150,7 @@ bot.action("previousAnswer", async ctx => {
 });
 bot.action("nextAnswer", async ctx => {
     const currentState = fileio.readStates();
-    const response = await axios.get(configs.API_BASE_URL +`/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
+    const response = await axios.get(configs.API_BASE_URL + `/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
     const items = response.data.items;
     if (currentState.answerCount < items.length) {
         ctx.deleteMessage();
@@ -162,7 +171,7 @@ bot.action("nextAnswer", async ctx => {
 });
 bot.action("browseAnswer", async ctx => {
     const currentState = fileio.readStates();
-    const response = await axios.get(configs.API_BASE_URL +`/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
+    const response = await axios.get(configs.API_BASE_URL + `/questions/${currentState.currentQuestionId}/answers?site=stackoverflow&filter=withbody`);
     const items = response.data.items;
     let message = '';
     if (items.length <= 6) {
@@ -186,6 +195,30 @@ bot.action("browseAnswer", async ctx => {
         fileio.writeStates(0, currentState.lastQuestionText, currentState.currentQuestionId, 0, items[0].answer_id);
     }
 
+});
+
+bot.on('inline_query', async ctx => {
+    let enteredText = ctx.inlineQuery.query;
+    const response = await axios.get(configs.API_BASE_URL + `/questions?order=desc&sort=votes&site=stackoverflow&tagged=${enteredText}&filter=withbody`);
+    const items = response.data.items;
+    let results = [];
+    console.log(items.length);
+    for (let item in items) {
+        results.push({
+            type: 'article',
+            id: item,
+            title: items[item].title,
+            input_message_content: {
+                message_text: `*${htmltotext.fromString(items[item].title)}*\n${htmltotext.fromString(items[item].body)}`,
+                parse_mode: "Markdown"
+            },
+            description: "description here",
+            reply_markup: {
+                inline_keyboard: [[{text: "Browse Answer", callback_data: "browseAnswers"}]]
+            }
+        });
+    }
+    ctx.answerInlineQuery(results, {});
 });
 
 if (configs.PRODUCTION_MODE) {
