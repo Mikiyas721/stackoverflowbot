@@ -6,5 +6,3 @@ const stackKey = "X7hmoKyFazswM65No1lnsA((";
 const stackClientId = "17827";
 const stackClientSecret = "cRGRyBLLNg8zDknij7lq9w((";
 
-
-export default configs;
