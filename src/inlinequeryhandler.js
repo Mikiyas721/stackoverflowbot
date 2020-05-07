@@ -16,7 +16,7 @@ module.exports = (bot) => {
                 input_message_content: {
                     message_text: `*${htmltotext.fromString(items[item].title)}*\n${htmltotext.fromString(items[item].body)}`,
                 },
-                description: "description here",
+                description: htmltotext.fromString(items[item].title),
                 reply_markup: {
                     inline_keyboard: [[{text: "Browse Answer", callback_data: "browseAnswers"}]]
                 }
