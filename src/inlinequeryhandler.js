@@ -12,7 +12,7 @@ module.exports = (bot) => {
             results.push({
                 type: 'article',
                 id: item,
-                title: items[item].title,
+                title: htmltotext.fromString(items[item].title),
                 input_message_content: {
                     message_text: `*${htmltotext.fromString(items[item].title)}*\n${htmltotext.fromString(items[item].body)}`,
                 },
