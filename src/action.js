@@ -31,8 +31,9 @@ module.exports = (bot) => {
                     ]
                 },
             });
+            ctx.answerCbQuery();
         } else {
-            // TODO Send toast message instead.
+            ctx.answerCbQuery("More more questions")
         }
 
     };
@@ -65,8 +66,9 @@ module.exports = (bot) => {
                     ]
                 }/*, parse_mode: "Markdown"*/
             });
+            ctx.answerCbQuery();
         } else {
-            //TODO Send toast message instead.
+            ctx.answerCbQuery("More more questions")
         }
     };
     const nextAnswer = async (ctx, stateObject) => {
@@ -91,8 +93,9 @@ module.exports = (bot) => {
                     ]
                 }
             });
+            ctx.answerCbQuery();
         } else {
-
+            ctx.answerCbQuery("More more answer")
         }
     };
     const previousAnswer = async (ctx, stateObject) => {
@@ -117,8 +120,9 @@ module.exports = (bot) => {
                     ]
                 }
             });
+            ctx.answerCbQuery();
         } else {
-
+            ctx.answerCbQuery("More more answer")
         }
 
     };
