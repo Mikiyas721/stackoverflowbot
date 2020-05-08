@@ -11,19 +11,23 @@ module.exports = (bot) => {
                     ctx.telegram.sendMessage(ctx.chat.id, `*${htmltotext.fromString(items[0].title)}*\n\n${htmltotext.fromString(items[0].body)}`, {
                         reply_markup: {
                             inline_keyboard: [
-                                [[{
-                                    text: "Previous Q",
-                                    callback_data: `previousQuestion,${ctx.message.text},${0},${items[0].question_id},${0},${items[0].answer_id}`
-                                },
+                                [
+                                    {
+                                        text: "Previous Q",
+                                        callback_data: `previousQuestion,${ctx.message.text},${0},${items[0].question_id},${0},${items[0].answer_id}`
+                                    },
                                     {
                                         text: "Next Q",
                                         callback_data: `nextQuestion,${ctx.message.text},${0},${items[0].question_id},${0},${items[0].answer_id}`
                                     }
-                                ], [{
-                                    text: "Browse answers",
-                                    callback_data: `browserAnswer,${ctx.message.text},${0},${items[0].question_id},${0},${items[0].answer_id}`
-                                }]
+                                ],
+                                [
+                                    {
+                                        text: "Browse answers",
+                                        callback_data: `browseAnswer,${ctx.message.text},${0},${items[0].question_id},${0},${items[0].answer_id}`
+                                    }
                                 ]
+
                             ]
                         }, parse_mode: "Markdown"
                     });

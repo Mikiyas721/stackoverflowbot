@@ -7,7 +7,6 @@ module.exports = (bot) => {
         let enteredText = ctx.inlineQuery.query;
         const items = await http.makeQuestionRequest(enteredText, ctx);
         let results = [];
-        console.log(items.length);
         for (let item in items) {
             results.push({
                 type: 'article',
@@ -18,7 +17,14 @@ module.exports = (bot) => {
                 },
                 description: htmltotext.fromString(items[item].title),
                 reply_markup: {
-                    inline_keyboard: [[{text: "Browse Answer", callback_data: "browseAnswers"}]]
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Browse Answer",
+                                callback_data: `browseAnswer,${ctx.update.inline_query.query},${item},${items[item].question_id},${0},${items[item].answer_id}`
+                            }
+                        ]
+                    ]
                 }
             });
         }

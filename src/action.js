@@ -12,18 +12,22 @@ module.exports = (bot) => {
             ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[count].title)}\n\n${htmltotext.fromString(items[count].body)}`, {
                 reply_markup: {
                     inline_keyboard: [
-                        [{
-                            text: "Previous Q",
-                            callback_data: `previousQuestion,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
-                        },
+                        [
+                            {
+                                text: "Previous Q",
+                                callback_data: `previousQuestion,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            },
                             {
                                 text: "Next Q",
                                 callback_data: `nextQuestion,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
                             }
-                        ], [{
-                            text: "Browse Answers",
-                            callback_data: `browseAnswer,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
-                        }]
+                        ],
+                        [
+                            {
+                                text: "Browse Answers",
+                                callback_data: `browseAnswer,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            }
+                        ]
                     ]
                 },
             });
@@ -36,25 +40,29 @@ module.exports = (bot) => {
         let questionCount = stateObject.questionCount;
         if (questionCount > 0) {
             questionCount--;
-            const lastInputText = stateObject.lastQuestionText;
+            const lastInputText = stateObject.enteredText;
             ctx.deleteMessage();
             const items = await http.makeQuestionRequest(lastInputText, ctx);
             ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[questionCount].title)}\n\n${htmltotext.fromString(items[questionCount].body)}`, {
                 reply_markup: {
                     inline_keyboard: [
-                        [{
-                            text: "Previous Q",
-                            callback_data: `previousQuestion,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
-                        },
+                        [
+                            {
+                                text: "Previous Q",
+                                callback_data: `previousQuestion,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            },
                             {
                                 text: "Next Q",
                                 callback_data: `nextQuestion,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
-                            }]
-                        , [{
-                            text: "Browse Answers",
-                            callback_data: `browseAnswer,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
-                        }]]
-
+                            }
+                        ],
+                        [
+                            {
+                                text: "Browse Answers",
+                                callback_data: `browseAnswer,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            }
+                        ]
+                    ]
                 }/*, parse_mode: "Markdown"*/
             });
         } else {
@@ -117,15 +125,22 @@ module.exports = (bot) => {
     const browseAnswer = async (ctx, stateObject) => {
         const items = await http.makeAnswerRequest(stateObject.questionId, ctx);
         let message = '';
+        let id;
+        if (typeof ctx.chat !== "undefined") {
+            id = ctx.chat.id;
+        } else {
+            id = ctx.update.callback_query.from.id
+        }
         if (items.length <= 6) {
             for (let item in items) {
                 message += `\n*Answer ${parseInt(item) + 1}*\n${htmltotext.fromString(items[item].body)}\n================================================`
             }
-            ctx.telegram.sendMessage(ctx.chat.id, message, {
+
+            ctx.telegram.sendMessage(id, message, {
                 parse_mode: "Markdown"
             });
         } else {
-            ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[0].body), {
+            ctx.telegram.sendMessage(id, htmltotext.fromString(items[0].body), {
                 reply_markup: {
                     inline_keyboard: [
                         [
