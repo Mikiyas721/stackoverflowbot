@@ -1,6 +1,6 @@
 const htmltotext = require('html-to-text');
 
-const http = require('./http');
+const http = require('./httpandassist');
 
 module.exports = (bot) => {
     bot.on('inline_query', async ctx => {

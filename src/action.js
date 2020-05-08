@@ -1,107 +1,121 @@
 const htmltotext = require('html-to-text');
 
-const fileio = require('./fileio/fileio');
-const http = require('./http');
+const http = require('./httpandassist');
 
 module.exports = (bot) => {
-    bot.action("previousQuestion", async ctx => {
-        try {
-            const state = fileio.readStates();
-            let count = state.questionCount;
-            if (count > 0) {
-                count--;
-                const lastInputText = state.lastQuestionText;
-                ctx.deleteMessage();
-                const items = await http.makeQuestionRequest(lastInputText, ctx);
-                ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[count].title)}\n\n${htmltotext.fromString(items[count].body)}`, {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{text: "Previous Q", callback_data: "previousQuestion"},
-                                {text: "Next Q", callback_data: "nextQuestion"}
-                            ], [{text: "Browse answers", callback_data: "browseAnswer"}]
-                        ]
-                    }/*, parse_mode: "Markdown"*/
-                });
-                fileio.writeStates(count, lastInputText, items[count].question_id)
-            } else {
-                //TODO Send toast message instead.
-            }
-        } catch (e) {
-            ctx.reply(e);
+    const nextQuestion = async (ctx, stateObject) => {
+        let count = stateObject.questionCount;
+        const items = await http.makeQuestionRequest(stateObject.enteredText, ctx);
+        if (count < items.length) {
+            count++;
+            ctx.deleteMessage();
+            ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[count].title)}\n\n${htmltotext.fromString(items[count].body)}`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{
+                            text: "Previous Q",
+                            callback_data: `previousQuestion,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                        },
+                            {
+                                text: "Next Q",
+                                callback_data: `nextQuestion,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            }
+                        ], [{
+                            text: "Browse Answers",
+                            callback_data: `browseAnswer,${stateObject.enteredText},${count},${items[count].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                        }]
+                    ]
+                },
+            });
+        } else {
+            // TODO Send toast message instead.
         }
 
-    });
-    bot.action("nextQuestion", async ctx => {
-        try {
-            const state = fileio.readStates();
-            let count = state.questionCount;
-            const lastInputText = state.lastQuestionText;
+    };
+    const previousQuestion = async (ctx, stateObject) => {
+        let questionCount = stateObject.questionCount;
+        if (questionCount > 0) {
+            questionCount--;
+            const lastInputText = stateObject.lastQuestionText;
+            ctx.deleteMessage();
             const items = await http.makeQuestionRequest(lastInputText, ctx);
-            if (count < items.length) {
-                count++;
-                ctx.deleteMessage();
-                ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[count].title)}\n\n${htmltotext.fromString(items[count].body)}`, {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{text: "Previous Q", callback_data: "previousQuestion"},
-                                {text: "Next Q", callback_data: "nextQuestion"}
-                            ], [{text: "Browse answers", callback_data: "browseAnswer"}]
-                        ]
-                    },
-                });
-                fileio.writeStates(count, lastInputText, items[count].question_id)
-            } else {
-                // TODO Send toast message instead.
-            }
-        } catch (e) {
-            ctx.reply(e);
-        }
+            ctx.telegram.sendMessage(ctx.chat.id, `${htmltotext.fromString(items[questionCount].title)}\n\n${htmltotext.fromString(items[questionCount].body)}`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{
+                            text: "Previous Q",
+                            callback_data: `previousQuestion,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                        },
+                            {
+                                text: "Next Q",
+                                callback_data: `nextQuestion,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                            }]
+                        , [{
+                            text: "Browse Answers",
+                            callback_data: `browseAnswer,${stateObject.enteredText},${questionCount},${items[questionCount].question_id},${stateObject.answerCount},${stateObject.answerId}`
+                        }]]
 
-    });
-    bot.action("previousAnswer", async ctx => {
-        const currentState = fileio.readStates();
-        if (currentState.answerCount > 0) {
+                }/*, parse_mode: "Markdown"*/
+            });
+        } else {
+            //TODO Send toast message instead.
+        }
+    };
+    const nextAnswer = async (ctx, stateObject) => {
+        const items = await http.makeAnswerRequest(stateObject.questionId, ctx);
+        if (stateObject.questionCount < items.length) {
+            let answerCount = stateObject.answerCount;
+            answerCount++;
             ctx.deleteMessage();
-            const items = await http.makeAnswerRequest(currentState.currentQuestionId, ctx);
-            ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[currentState.questionCount - 1].body), {
+            ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[answerCount].body), {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {text: "Previous A", callback_data: "previousAnswer"},
-                            {text: "Next A", callback_data: "nextAnswer"},
+                            {
+                                text: "Previous A",
+                                callback_data: `previousAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${answerCount},${items[answerCount].answer_id}`
+                            },
+                            {
+                                text: "Next A",
+                                callback_data: `nextAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${answerCount},${items[answerCount].answer_id}`
+                            },
                         ]
                     ]
                 }
             });
-            fileio.writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount - 1, items[currentState.answerCount - 1].answer_id);
         } else {
 
         }
-
-    });
-    bot.action("nextAnswer", async ctx => {
-        const currentState = fileio.readStates();
-        const items = await http.makeAnswerRequest(currentState.currentQuestionId, ctx);
-        if (currentState.answerCount < items.length) {
+    };
+    const previousAnswer = async (ctx, stateObject) => {
+        if (stateObject.answerCount > 0) {
             ctx.deleteMessage();
-            ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[currentState.questionCount + 1].body), {
+            let answerCount = stateObject.answerCount;
+            answerCount--;
+            const items = await http.makeAnswerRequest(stateObject.questionId, ctx);
+            ctx.telegram.sendMessage(ctx.chat.id, htmltotext.fromString(items[answerCount].body), {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {text: "Previous A", callback_data: "previousAnswer"},
-                            {text: "Next A", callback_data: "nextAnswer"},
+                            {
+                                text: "Previous A",
+                                callback_data: `previousAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${answerCount},${items[answerCount].answer_id}`
+                            },
+                            {
+                                text: "Next A",
+                                callback_data: `nextAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${answerCount},${items[answerCount].answer_id}`
+                            },
                         ]
                     ]
                 }
             });
-            fileio.writeStates(currentState.questionCount, currentState.lastQuestionText, currentState.currentQuestionId, currentState.answerCount + 1, items[currentState.answerCount + 1].answer_id);
         } else {
 
         }
-    });
-    bot.action("browseAnswer", async ctx => {
-        const currentState = fileio.readStates();
-        const items = await http.makeAnswerRequest(currentState.currentQuestionId, ctx);
+
+    };
+    const browseAnswer = async (ctx, stateObject) => {
+        const items = await http.makeAnswerRequest(stateObject.questionId, ctx);
         let message = '';
         if (items.length <= 6) {
             for (let item in items) {
@@ -115,15 +129,42 @@ module.exports = (bot) => {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {text: "Previous A", callback_data: "previousAnswer"},
-                            {text: "Next A", callback_data: "nextAnswer"},
+                            {
+                                text: "Previous A",
+                                callback_data: `previousAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${0},${items[0].answer_id}`
+                            },
+                            {
+                                text: "Next A",
+                                callback_data: `nextAnswer,${stateObject.enteredText},${stateObject.questionCount},${stateObject.questionId},${0},${items[0].answer_id}`
+                            },
                         ]
                     ]
                 }
             });
-            fileio.writeStates(0, currentState.lastQuestionText, currentState.currentQuestionId, 0, items[0].answer_id);
         }
+    };
 
+    bot.on("callback_query", async ctx => {
+        let states = ctx.update.callback_query.data;
+        let statesArray = states.split(",");
+        statesArray.shift();
+        let dataString = statesArray.join(",");
+        let statesObject = http.getDataObject(dataString);
+
+        states = ctx.update.callback_query.data;
+        statesArray = states.split(",");
+        if (statesArray[0] === "nextQuestion") {
+            await nextQuestion(ctx, statesObject);
+        } else if (statesArray[0] === "previousQuestion") {
+            await previousQuestion(ctx, statesObject);
+        } else if (statesArray[0] === "nextAnswer") {
+            await nextAnswer(ctx, statesObject);
+        } else if (statesArray[0] === "previousAnswer") {
+            await previousAnswer(ctx, statesObject);
+        } else if (statesArray[0] === "browseAnswer") {
+            await browseAnswer(ctx, statesObject);
+        }
     });
+
 
 };
