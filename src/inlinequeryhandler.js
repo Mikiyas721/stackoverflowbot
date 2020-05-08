@@ -14,6 +14,7 @@ module.exports = (bot) => {
                 title: htmltotext.fromString(items[item].title),
                 input_message_content: {
                     message_text: `*${htmltotext.fromString(items[item].title)}*\n${htmltotext.fromString(items[item].body)}`,
+                    /*parse_mode: "Markdown"*/
                 },
                 description: htmltotext.fromString(items[item].title),
                 reply_markup: {
