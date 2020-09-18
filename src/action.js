@@ -1,5 +1,4 @@
 const htmltotext = require('html-to-text');
-
 const http = require('./httpandassist');
 
 module.exports = (bot) => {
@@ -133,7 +132,7 @@ module.exports = (bot) => {
         if (typeof ctx.chat !== "undefined") {
             id = ctx.chat.id;
         } else {
-            id = ctx.update.callback_query.from.id
+            id = ctx.update.callback_query.from.id;
         }
         if (items.length <= 6) {
             for (let item in items) {
